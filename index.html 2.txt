@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экзамены</title>
+    <link rel="icon" href="images/logo.ico">
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .question {
+            font-size: 18px;
+            margin-bottom: 15px;
+            cursor: move;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .options {
+            margin-bottom: 20px;
+        }
+
+        .option {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .option:hover {
+            background-color: #f1f1f1;
+            border-color: #aaa;
+        }
+
+        .option.selected {
+            background-color: #e0f7fa;
+            border-color: #00796b;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            text-align: center;
+        }
+
+        canvas {
+            margin-top: 20px;
+        }
+
+        .incorrect-answers {
+            margin-top: 20px;
+        }
+
+        .incorrect-answer {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .incorrect-answer p {
+            margin: 5px 0;
+        }
+
+        .incorrect-answer .your-answer {
+            color: #f44336;
+        }
+
+        .incorrect-answer .correct-answer {
+            color: #4caf50;
+        }
+
+        .incorrect-answer .question-text {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="timer">Время: 00:00</div>
+        <div id="question" class="question"></div>
+        <div id="image"></div>
+        <div id="options" class="options"></div>
+        <div class="controls">
+            <button id="prev">Предыдущий</button>
+            <button id="next">Следующий</button>
+        </div>
+        <button id="viewIncorrectAnswers">Посмотреть неправильные ответы</button>
+        <button id="finish">Завершить тест</button>
+        <div id="result" class="result"></div>
+        <div id="incorrectAnswers" class="incorrect-answers"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script>
+        const allQuestions  = [
+        {
+    "question": "Что выведет print(2 + 3)?",
+    "options": [
+      "5",
+      "23",
+      "\"2 + 3\"",
+      "Ошибка",
+      "None"
+    ],
+    "correct": "5",
+    "image": ""
+  },
+  {
+    "question": "Какой тип данных у True?",
+    "options": [
+      "bool",
+      "int",
+      "str",
+      "float",
+      "None"
+    ],
+    "correct": "bool",
+    "image": ""
+  },
+  {
+    "question": "Что делает функция len()?",
+    "options": [
+      "Возвращает длину объекта",
+      "Удаляет элемент",
+      "Добавляет элемент",
+      "Сортирует список",
+      "Завершает программу"
+    ],
+    "correct": "Возвращает длину объекта",
+    "image": ""
+  },
+  {
+    "question": "Как создать список в Python?",
+    "options": [
+      "[1, 2, 3]",
+      "{1, 2, 3}",
+      "(1, 2, 3)",
+      "<1, 2, 3>",
+      "list(1, 2, 3)"
+    ],
+    "correct": "[1, 2, 3]",
+    "image": ""
+  },
+  {
+    "question": "Как создать пустой словарь?",
+    "options": [
+      "{}",
+      "[]",
+      "()",
+      "set()",
+      "None"
+    ],
+    "correct": "{}",
+    "image": ""
+  },
+  {
+    "question": "Какой результат у 5 // 2?",
+    "options": [
+      "2",
+      "2.5",
+      "3",
+      "1",
+      "0"
+    ],
+    "correct": "2",
+    "image": ""
+  },
+  {
+    "question": "Какой оператор используется для возведения в степень?",
+    "options": [
+      "**",
+      "^",
+      "^^",
+      "//",
+      "%"
+    ],
+    "correct": "**",
+    "image": ""
+  },
+  {
+    "question": "Какой метод добавляет элемент в список?",
+    "options": [
+      "append()",
+      "add()",
+      "insert()",
+      "extend()",
+      "push()"
+    ],
+    "correct": "append()",
+    "image": ""
+  },
+  {
+    "question": "Как проверить тип переменной?",
+    "options": [
+      "type()",
+      "typeof",
+      "checktype()",
+      "kind()",
+      "gettype()"
+    ],
+    "correct": "type()",
+    "image": ""
+  },
+  {
+    "question": "Какой результат у выражения bool(\"\")?",
+    "options": [
+      "False",
+      "True",
+      "None",
+      "Ошибка",
+      "0"
+    ],
+    "correct": "False",
+    "image": ""
+  },
+  {
+    "question": "Что выведет print(\"a\" * 3)?",
+    "options": [
+      "aaa",
+      "a a a",
+      "3a",
+      "aaaa",
+      "Ошибка"
+    ],
+    "correct": "aaa",
+    "image": ""
+  },
+  {
+    "question": "Что делает метод .split()?",
+    "options": [
+      "Разделяет строку по разделителю",
+      "Объединяет строки",
+      "Удаляет пробелы",
+      "Разбивает список",
+      "Удаляет элементы"
+    ],
+    "correct": "Разделяет строку по разделителю",
+    "image": ""
+  },
+  {
+    "question": "Что вернёт range(3)?",
+    "options": [
+      "0, 1, 2",
+      "1, 2, 3",
+      "0, 1, 2, 3",
+      "1, 2",
+      "3"
+    ],
+    "correct": "0, 1, 2",
+    "image": ""
+  },
+  {
+    "question": "Какой результат у 3 in [1, 2, 3, 4]?",
+    "options": [
+      "True",
+      "False",
+      "None",
+      "1",
+      "Ошибка"
+    ],
+    "correct": "True",
+    "image": ""
+  },
+  {
+    "question": "Как начать блок условного оператора?",
+    "options": [
+      "if условие:",
+      "if (условие)",
+      "if условие then",
+      "when (условие)",
+      "if {}"
+    ],
+    "correct": "if условие:",
+    "image": ""
+  },
+  {
+    "question": "Что делает elif?",
+    "options": [
+      "Проверяет альтернативное условие",
+      "Завершает цикл",
+      "Начинает функцию",
+      "Повторяет условие",
+      "Пропускает итерацию"
+    ],
+    "correct": "Проверяет альтернативное условие",
+    "image": ""
+  },
+  {
+    "question": "Что делает while?",
+    "options": [
+      "Повторяет блок, пока условие истинно",
+      "Выполняется один раз",
+      "Повторяет фиксированное число раз",
+      "Определяет переменную",
+      "Импортирует библиотеку"
+    ],
+    "correct": "Повторяет блок, пока условие истинно",
+    "image": ""
+  },
+  {
+    "question": "Как задать функцию?",
+    "options": [
+      "def имя():",
+      "func имя()",
+      "function имя()",
+      "create имя()",
+      "function:"
+    ],
+    "correct": "def имя():",
+    "image": ""
+  },
+  {
+    "question": "Как вернуть значение из функции?",
+    "options": [
+      "return значение",
+      "yield значение",
+      "print значение",
+      "pass значение",
+      "send значение"
+    ],
+    "correct": "return значение",
+    "image": ""
+  },
+  {
+    "question": "Как импортировать модуль math?",
+    "options": [
+      "import math",
+      "include math",
+      "using math",
+      "load math",
+      "attach math"
+    ],
+    "correct": "import math",
+    "image": ""
+  },
+  {
+    "question": "Как вызвать функцию sqrt() из модуля math?",
+    "options": [
+      "math.sqrt()",
+      "sqrt()",
+      "sqrt.math()",
+      "math:sqrt()",
+      "get.sqrt()"
+    ],
+    "correct": "math.sqrt()",
+    "image": ""
+  },
+  {
+    "question": "Что такое None?",
+    "options": [
+      "Отсутствие значения",
+      "Пустая строка",
+      "Ноль",
+      "Ложь",
+      "Тип ошибки"
+    ],
+    "correct": "Отсутствие значения",
+    "image": ""
+  },
+  {
+    "question": "Что делает оператор is?",
+    "options": [
+      "Проверяет идентичность объектов",
+      "Сравнивает значения",
+      "Проверяет тип",
+      "Сравнивает длину",
+      "Присваивает значение"
+    ],
+    "correct": "Проверяет идентичность объектов",
+    "image": ""
+  },
+  {
+    "question": "Как задать множество (set)?",
+    "options": [
+      "{1, 2, 3}",
+      "[1, 2, 3]",
+      "(1, 2, 3)",
+      "set = [1,2,3]",
+      "set(1 2 3)"
+    ],
+    "correct": "{1, 2, 3}",
+    "image": ""
+  },
+  {
+    "question": "Что делает continue в цикле?",
+    "options": [
+      "Переходит к следующей итерации",
+      "Завершает цикл",
+      "Повторяет цикл",
+      "Переходит к началу программы",
+      "Пропускает всю программу"
+    ],
+    "correct": "Переходит к следующей итерации",
+    "image": ""
+  },
+  {
+    "question": "Что делает break?",
+    "options": [
+      "Завершает цикл",
+      "Переходит к следующей итерации",
+      "Приостанавливает программу",
+      "Очищает список",
+      "Завершает функцию"
+    ],
+    "correct": "Завершает цикл",
+    "image": ""
+  },
+  {
+    "question": "Как создать класс?",
+    "options": [
+      "class Имя:",
+      "Class Имя()",
+      "def class():",
+      "object Имя",
+      "new class"
+    ],
+    "correct": "class Имя:",
+    "image": ""
+  },
+  {
+    "question": "Что такое __init__?",
+    "options": [
+      "Конструктор класса",
+      "Деструктор",
+      "Метод печати",
+      "Системная ошибка",
+      "Модуль"
+    ],
+    "correct": "Конструктор класса",
+    "image": ""
+  },
+  {
+    "question": "Как вызвать родительский метод?",
+    "options": [
+      "super()",
+      "parent()",
+      "base()",
+      "this()",
+      "upper()"
+    ],
+    "correct": "super()",
+    "image": ""
+  },
+  {
+    "question": "Как открыть файл для чтения?",
+    "options": [
+      "open(\"file.txt\", \"r\")",
+      "read(\"file.txt\")",
+      "file(\"file.txt\")",
+      "open(\"file.txt\")",
+      "open(\"file.txt\", \"w\")"
+    ],
+    "correct": "open(\"file.txt\", \"r\")",
+    "image": ""
+  },
+  {
+    "question": "Как обозначается однострочный комментарий в Python?",
+    "options": [
+      "#",
+      "//",
+      "/* */",
+      "<!-- -->",
+      "--"
+    ],
+    "correct": "#",
+    "image": ""
+  },
+  {
+    "question": "Какой результат у выражения 10 % 3?",
+    "options": [
+      "1",
+      "3",
+      "0",
+      "10",
+      "Ошибка"
+    ],
+    "correct": "1",
+    "image": ""
+  },
+  {
+    "question": "Какой метод используется для сортировки списка?",
+    "options": [
+      "sort()",
+      "order()",
+      "arrange()",
+      "sorted()",
+      "list.sort()"
+    ],
+    "correct": "sort()",
+    "image": ""
+  },
+  {
+    "question": "Как удалить элемент по индексу из списка?",
+    "options": [
+      "del list[index]",
+      "remove(index)",
+      "pop[index]",
+      "list.delete()",
+      "cut(index)"
+    ],
+    "correct": "del list[index]",
+    "image": ""
+  },
+  {
+    "question": "Что делает input()?",
+    "options": [
+      "Считывает ввод пользователя",
+      "Выводит текст",
+      "Вызывает ошибку",
+      "Завершает программу",
+      "Читает файл"
+    ],
+    "correct": "Считывает ввод пользователя",
+    "image": ""
+  },
+  {
+    "question": "Как обозначается логическое И?",
+    "options": [
+      "and",
+      "&&",
+      "AND",
+      "&",
+      "+"
+    ],
+    "correct": "and",
+    "image": ""
+  },
+  {
+    "question": "Как обозначается логическое ИЛИ?",
+    "options": [
+      "or",
+      "||",
+      "OR",
+      "|",
+      "/"
+    ],
+    "correct": "or",
+    "image": ""
+  },
+  {
+    "question": "Что делает функция map()?",
+    "options": [
+      "Применяет функцию к каждому элементу итерируемого объекта",
+      "Объединяет два списка",
+      "Удаляет элементы",
+      "Фильтрует значения",
+      "Клонирует объекты"
+    ],
+    "correct": "Применяет функцию к каждому элементу итерируемого объекта",
+    "image": ""
+  },
+  {
+    "question": "Что делает функция filter()?",
+    "options": [
+      "Оставляет элементы, удовлетворяющие условию",
+      "Преобразует список в строку",
+      "Удаляет все значения",
+      "Разбивает список",
+      "Добавляет в список"
+    ],
+    "correct": "Оставляет элементы, удовлетворяющие условию",
+    "image": ""
+  },
+  {
+    "question": "Что делает lambda?",
+    "options": [
+      "Создаёт анонимную функцию",
+      "Создаёт класс",
+      "Удаляет переменные",
+      "Импортирует модуль",
+      "Открывает файл"
+    ],
+    "correct": "Создаёт анонимную функцию",
+    "image": ""
+  },
+  {
+    "question": "Как преобразовать строку \"123\" в целое число?",
+    "options": [
+      "int(\"123\")",
+      "str(123)",
+      "float(\"123\")",
+      "eval(123)",
+      "parse(\"123\")"
+    ],
+    "correct": "int(\"123\")",
+    "image": ""
+  },
+  {
+    "question": "Что делает try...except?",
+    "options": [
+      "Обрабатывает исключения",
+      "Проверяет условие",
+      "Повторяет код",
+      "Создаёт цикл",
+      "Определяет класс"
+    ],
+    "correct": "Обрабатывает исключения",
+    "image": ""
+  },
+  {
+    "question": "Как задать диапазон от 5 до 9 включительно?",
+    "options": [
+      "range(5, 10)",
+      "range(5, 9)",
+      "range(5, 9+1)",
+      "range(5, 9, 1)",
+      "range[5, 10]"
+    ],
+    "correct": "range(5, 10)",
+    "image": ""
+  },
+  {
+    "question": "Что делает with open(...) as f:?",
+    "options": [
+      "Автоматически закрывает файл",
+      "Создаёт переменную",
+      "Читает каталог",
+      "Проверяет путь",
+      "Выводит имя файла"
+    ],
+    "correct": "Автоматически закрывает файл",
+    "image": ""
+  },
+  {
+    "question": "Как получить доступ к элементу словаря по ключу?",
+    "options": [
+      "dict[key]",
+      "dict.key()",
+      "dict.getkey()",
+      "dict{key}",
+      "dict->key"
+    ],
+    "correct": "dict[key]",
+    "image": ""
+  },
+  {
+    "question": "Как узнать количество элементов в словаре?",
+    "options": [
+      "len(dict)",
+      "dict.len()",
+      "count(dict)",
+      "dict.count()",
+      "length(dict)"
+    ],
+    "correct": "len(dict)",
+    "image": ""
+  },
+  {
+    "question": "Что возвращает функция enumerate()?",
+    "options": [
+      "Индекс и значение из последовательности",
+      "Только значения",
+      "Только индексы",
+      "Ключ и значение",
+      "Пары значений"
+    ],
+    "correct": "Индекс и значение из последовательности",
+    "image": ""
+  },
+  {
+    "question": "Что делает zip()?",
+    "options": [
+      "Объединяет несколько итерируемых объектов в кортежи",
+      "Сжимает данные",
+      "Удаляет пустые элементы",
+      "Переворачивает список",
+      "Разбивает строку"
+    ],
+    "correct": "Объединяет несколько итерируемых объектов в кортежи",
+    "image": ""
+  },
+  {
+    "question": "Что делает метод strip()?",
+    "options": [
+      "Удаляет пробелы с начала и конца строки",
+      "Делает строку заглавной",
+      "Разбивает строку",
+      "Удаляет символы из середины строки",
+      "Заменяет символы"
+    ],
+    "correct": "Удаляет пробелы с начала и конца строки",
+    "image": ""
+  },
+  {
+    "question": "Какой тип данных возвращает функция range()?",
+    "options": [
+      "range",
+      "list",
+      "tuple",
+      "dict",
+      "set"
+    ],
+    "correct": "range",
+    "image": ""
+  },
+  {
+    "question": "Что делает метод .join()?",
+    "options": [
+      "Объединяет элементы списка в строку",
+      "Разделяет строку",
+      "Копирует строку",
+      "Удаляет символы",
+      "Заменяет символы"
+    ],
+    "correct": "Объединяет элементы списка в строку",
+    "image": ""
+  },
+  {
+    "question": "Как создать кортеж из одного элемента 5?",
+    "options": [
+      "(5,)",
+      "(5)",
+      "[5]",
+      "{5}",
+      "tuple[5]"
+    ],
+    "correct": "(5,)",
+    "image": ""
+  },
+  {
+    "question": "Что делает метод .pop() у списка?",
+    "options": [
+      "Удаляет и возвращает элемент по индексу",
+      "Копирует элемент",
+      "Заменяет элемент",
+      "Удаляет все элементы",
+      "Удаляет по значению"
+    ],
+    "correct": "Удаляет и возвращает элемент по индексу",
+    "image": ""
+  },
+  {
+    "question": "Как объединить два списка a и b?",
+    "options": [
+      "a + b",
+      "a.append(b)",
+      "a.join(b)",
+      "a.extend(b)",
+      "merge(a, b)"
+    ],
+    "correct": "a + b",
+    "image": ""
+  },
+  {
+    "question": "Что делает isinstance(x, int)?",
+    "options": [
+      "Проверяет, является ли x числом",
+      "Преобразует x в число",
+      "Удаляет x",
+      "Выводит тип",
+      "Объявляет переменную"
+    ],
+    "correct": "Проверяет, является ли x числом",
+    "image": ""
+  },
+  {
+    "question": "Как вызвать метод upper() для строки?",
+    "options": [
+      "\"abc\".upper()",
+      "upper(\"abc\")",
+      "abc.upper()",
+      "str.upper()",
+      "toUpper(\"abc\")"
+    ],
+    "correct": "\"abc\".upper()",
+    "image": ""
+  },
+  {
+    "question": "Что делает pass?",
+    "options": [
+      "Заглушка, ничего не делает",
+      "Завершает цикл",
+      "Пропускает строку",
+      "Возвращает значение",
+      "Создаёт переменную"
+    ],
+    "correct": "Заглушка, ничего не делает",
+    "image": ""
+  },
+  {
+    "question": "Что выведет print(type([]))?",
+    "options": [
+      "<'class 'list''>",
+      "<list>",
+      "list",
+      "[]",
+      "None"
+    ],
+    "correct": "<'class 'list''>",
+    "image": ""
+  },
+  {
+    "question": "Что делает not?",
+    "options": [
+      "Логическое отрицание",
+      "Проверка равенства",
+      "Сравнение значений",
+      "Условие",
+      "Исключение"
+    ],
+    "correct": "Логическое отрицание",
+    "image": ""
+  },
+  {
+    "question": "Что делает метод .get() у словаря?",
+    "options": [
+      "Получает значение по ключу",
+      "Удаляет элемент",
+      "Добавляет ключ",
+      "Изменяет ключ",
+      "Проверяет наличие"
+    ],
+    "correct": "Получает значение по ключу",
+    "image": ""
+  },
+  {
+    "question": "Как создать словарь с ключами a, b и значениями 1, 2?",
+    "options": [
+      "{'a': 1, 'b': 2}",
+      "{a = 1, b = 2}",
+      "[a: 1, b: 2]",
+      "(a:1, b:2)",
+      "dict[a=1, b=2]"
+    ],
+    "correct": "{'a': 1, 'b': 2}",
+    "image": ""
+  },
+  {
+    "question": "Что делает set()?",
+    "options": [
+      "Создаёт множество",
+      "Создаёт список",
+      "Объявляет переменную",
+      "Устанавливает значение",
+      "Объявляет функцию"
+    ],
+    "correct": "Создаёт множество",
+    "image": ""
+  },
+  {
+    "question": "Как узнать количество аргументов в функции?",
+    "options": [
+      "Использовать *args и посмотреть длину",
+      "Сравнить args.count()",
+      "Использовать sizeof(args)",
+      "Написать args.length()",
+      "Применить argn()"
+    ],
+    "correct": "Использовать *args и посмотреть длину",
+    "image": ""
+  },
+  {
+    "question": "Что такое генератор списка?",
+    "options": [
+      "[x for x in range(5)]",
+      "gen(x)",
+      "for x in range(5)",
+      "x[] for x in range(5)",
+      "list(x) in range(5)"
+    ],
+    "correct": "[x for x in range(5)]",
+    "image": ""
+  },
+  {
+    "question": "Как в Python называется пространство имён переменных?",
+    "options": [
+      "Namespace",
+      "Scope",
+      "Stack",
+      "Area",
+      "Block"
+    ],
+    "correct": "Namespace",
+    "image": ""
+  },
+  {
+    "question": "Что делает del x?",
+    "options": [
+      "Удаляет переменную x",
+      "Очищает переменную",
+      "Обнуляет x",
+      "Скрывает x",
+      "Объявляет x"
+    ],
+    "correct": "Удаляет переменную x",
+    "image": ""
+  },
+  {
+    "question": "Как в Python получить остаток от деления?",
+    "options": [
+      "%",
+      "//",
+      "/",
+      "divmod()",
+      "mod()"
+    ],
+    "correct": "%",
+    "image": ""
+  },
+  {
+    "question": "Что выведет print(\"5\" + \"3\")?",
+    "options": [
+      "53",
+      "8",
+      "5+3",
+      "35",
+      "Ошибка"
+    ],
+    "correct": "53",
+    "image": ""
+  },
+  {
+    "question": "Как начинается программа в Delphi?",
+    "options": [
+      "program",
+      "unit",
+      "begin",
+      "var",
+      "uses"
+    ],
+    "correct": "program",
+    "image": ""
+  },
+  {
+    "question": "Как объявить переменную типа Integer?",
+    "options": [
+      "var x: Integer;",
+      "x = Integer;",
+      "int x;",
+      "dim x as Integer;",
+      "Integer x;"
+    ],
+    "correct": "var x: Integer;",
+    "image": ""
+  },
+  {
+    "question": "С чего начинается основная часть программы?",
+    "options": [
+      "begin",
+      "start",
+      "main",
+      "body",
+      "execute"
+    ],
+    "correct": "begin",
+    "image": ""
+  },
+  {
+    "question": "Чем заканчивается блок кода в Delphi?",
+    "options": [
+      "end.",
+      "stop",
+      "done",
+      "exit",
+      "close"
+    ],
+    "correct": "end.",
+    "image": ""
+  },
+  {
+    "question": "Как обозначается строковая переменная?",
+    "options": [
+      "String",
+      "Str",
+      "Text",
+      "Char[]",
+      "Varchar"
+    ],
+    "correct": "String",
+    "image": ""
+  },
+  {
+    "question": "Какой оператор используется для присваивания?",
+    "options": [
+      ":=",
+      "=",
+      "==",
+      "->",
+      "<-"
+    ],
+    "correct": ":=",
+    "image": ""
+  },
+  {
+    "question": "Как вывести сообщение пользователю?",
+    "options": [
+      "ShowMessage('Hello');",
+      "echo 'Hello';",
+      "print('Hello');",
+      "Write('Hello');",
+      "Output('Hello');"
+    ],
+    "correct": "ShowMessage('Hello');",
+    "image": ""
+  },
+  {
+    "question": "Что делает оператор if?",
+    "options": [
+      "Выполняет условную проверку",
+      "Создаёт цикл",
+      "Завершает программу",
+      "Объявляет переменную",
+      "Вызывает процедуру"
+    ],
+    "correct": "Выполняет условную проверку",
+    "image": ""
+  },
+  {
+    "question": "Как записывается цикл for?",
+    "options": [
+      "for i := 1 to 10 do",
+      "for(i=1; i<=10; i++)",
+      "foreach i in 1..10",
+      "loop i from 1 to 10",
+      "repeat i 1 to 10"
+    ],
+    "correct": "for i := 1 to 10 do",
+    "image": ""
+  },
+  {
+    "question": "Как объявить массив?",
+    "options": [
+      "array[1..5] of Integer;",
+      "int a[5];",
+      "Integer[] a = new Integer[5];",
+      "dim a(5) as Integer",
+      "list a = (1..5)"
+    ],
+    "correct": "array[1..5] of Integer;",
+    "image": ""
+  },
+  {
+    "question": "Какой файл содержит исходный код Delphi?",
+    "options": [
+      ".pas",
+      ".cpp",
+      ".java",
+      ".cs",
+      ".py"
+    ],
+    "correct": ".pas",
+    "image": ""
+  },
+  {
+    "question": "Что такое procedure?",
+    "options": [
+      "Подпрограмма без возвращаемого значения",
+      "Класс",
+      "Объект",
+      "Тип данных",
+      "Модуль"
+    ],
+    "correct": "Подпрограмма без возвращаемого значения",
+    "image": ""
+  },
+  {
+    "question": "Что делает оператор case?",
+    "options": [
+      "Проверяет значение переменной по вариантам",
+      "Объявляет переменные",
+      "Создаёт цикл",
+      "Импортирует модуль",
+      "Выводит сообщение"
+    ],
+    "correct": "Проверяет значение переменной по вариантам",
+    "image": ""
+  },
+  {
+    "question": "Как объявить константу?",
+    "options": [
+      "const Pi = 3.14;",
+      "define Pi = 3.14;",
+      "Pi := 3.14;",
+      "let Pi = 3.14;",
+      "final Pi = 3.14;"
+    ],
+    "correct": "const Pi = 3.14;",
+    "image": ""
+  },
+  {
+    "question": "Как создать новый модуль?",
+    "options": [
+      "unit ModuleName;",
+      "mod ModuleName;",
+      "module ModuleName;",
+      "new ModuleName;",
+      "create ModuleName;"
+    ],
+    "correct": "unit ModuleName;",
+    "image": ""
+  },
+  {
+    "question": "Как завершить цикл принудительно?",
+    "options": [
+      "break;",
+      "exit;",
+      "end;",
+      "continue;",
+      "stop;"
+    ],
+    "correct": "break;",
+    "image": ""
+  },
+  {
+    "question": "Что делает repeat...until?",
+    "options": [
+      "Выполняет цикл, пока условие не станет истинным",
+      "Повторяет бесконечно",
+      "Останавливает цикл",
+      "Создаёт переменную",
+      "Открывает файл"
+    ],
+    "correct": "Выполняет цикл, пока условие не станет истинным",
+    "image": ""
+  },
+  {
+    "question": "Как вызвать функцию?",
+    "options": [
+      "FunctionName;",
+      "call FunctionName()",
+      "execute FunctionName;",
+      "FunctionName[];",
+      "run FunctionName;"
+    ],
+    "correct": "FunctionName;",
+    "image": ""
+  },
+  {
+    "question": "Как задать комментарий?",
+    "options": [
+      "// комментарий",
+      "# комментарий",
+      "-- комментарий",
+      "/* комментарий */",
+      "REM комментарий"
+    ],
+    "correct": "// комментарий",
+    "image": ""
+  },
+  {
+    "question": "Как объявить тип Boolean?",
+    "options": [
+      "Boolean",
+      "bool",
+      "bit",
+      "truefalse",
+      "binary"
+    ],
+    "correct": "Boolean",
+    "image": ""
+  },
+  {
+    "question": "Что такое form в Delphi?",
+    "options": [
+      "Окно пользовательского интерфейса",
+      "Массив",
+      "Переменная",
+      "Класс",
+      "Тип данных"
+    ],
+    "correct": "Окно пользовательского интерфейса",
+    "image": ""
+  },
+  {
+    "question": "Где размещаются компоненты?",
+    "options": [
+      "На форме",
+      "В модуле",
+      "В переменной",
+      "В цикле",
+      "В классе"
+    ],
+    "correct": "На форме",
+    "image": ""
+  },
+  {
+    "question": "Что делает OnClick?",
+    "options": [
+      "Обрабатывает событие нажатия кнопки",
+      "Запускает таймер",
+      "Закрывает форму",
+      "Создаёт переменную",
+      "Запускает цикл"
+    ],
+    "correct": "Обрабатывает событие нажатия кнопки",
+    "image": ""
+  },
+  {
+    "question": "Как вывести значение переменной x в сообщение?",
+    "options": [
+      "ShowMessage(IntToStr(x));",
+      "Show(x);",
+      "Display(x);",
+      "Print(x);",
+      "Message(x);"
+    ],
+    "correct": "ShowMessage(IntToStr(x));",
+    "image": ""
+  },
+  {
+    "question": "Что такое TButton?",
+    "options": [
+      "Кнопка",
+      "Массив",
+      "Переменная",
+      "Цикл",
+      "Форма"
+    ],
+    "correct": "Кнопка",
+    "image": ""
+  },
+  {
+    "question": "Как работает while?",
+    "options": [
+      "Выполняет цикл, пока условие истинно",
+      "Проверяет один раз",
+      "Работает как for",
+      "Выполняет бесконечно",
+      "Работает как case"
+    ],
+    "correct": "Выполняет цикл, пока условие истинно",
+    "image": ""
+  },
+  {
+    "question": "Как указать имя формы?",
+    "options": [
+      "Form1.Caption := 'Программа';",
+      "Form1.Name := 'Программа';",
+      "Form1.Label := 'Программа';",
+      "SetTitle(Form1, 'Программа');",
+      "Form1.Title := 'Программа';"
+    ],
+    "correct": "Form1.Caption := 'Программа';",
+    "image": ""
+  },
+  {
+    "question": "Что делает Timer?",
+    "options": [
+      "Отслеживает время и выполняет событие",
+      "Считывает дату",
+      "Создаёт будильник",
+      "Меняет цвет",
+      "Создаёт паузу"
+    ],
+    "correct": "Отслеживает время и выполняет событие",
+    "image": ""
+  },
+  {
+    "question": "Что означает Application.Terminate?",
+    "options": [
+      "Завершает приложение",
+      "Скрывает форму",
+      "Очищает переменные",
+      "Перезапускает программу",
+      "Закрывает модуль"
+    ],
+    "correct": "Завершает приложение",
+    "image": ""
+  },
+  {
+    "question": "Как задать переменную с плавающей точкой?",
+    "options": [
+      "var x: Real;",
+      "float x;",
+      "x = float;",
+      "x: Double();",
+      "decimal x;"
+    ],
+    "correct": "var x: Real;",
+    "image": ""
+  },
+  {
+    "question": "Обращение к последнему элементу списка my_list с использованием отрицательной индексации",
+    "options": [
+      "my_list[-1]",
+      "my_list[1]",
+      "my_list[0]",
+      "my_list[len]",
+      "my_list[last]"
+    ],
+    "correct": "my_list[-1]",
+    "image": ""
+  },
+  {
+    "question": "Как проверить, является ли список пустым?",
+    "options": [
+      "if not my_list:",
+      "if my_list == None:",
+      "if my_list == []:",
+      "if len(my_list) < 1:",
+      "if my_list is 0:"
+    ],
+    "correct": "if not my_list:",
+    "image": ""
+},
+        ];
+
+                // Функция для случайного выбора 20 вопросов из массива
+                function getRandomQuestions(allQuestions, numQuestions) {
+            let selectedQuestions = [];
+            let questionsCopy = [...allQuestions]; // Создаем копию массива вопросов
+
+            for (let i = 0; i < numQuestions; i++) {
+                let randomIndex = Math.floor(Math.random() * questionsCopy.length);
+                selectedQuestions.push(questionsCopy[randomIndex]);
+                questionsCopy.splice(randomIndex, 1); // Убираем выбранный вопрос из списка
+            }
+
+            return selectedQuestions;
+        }
+
+        // Получаем случайные 20 вопросов
+        const questions = getRandomQuestions(allQuestions, 20);
+
+        let currentQuestion = 0;
+        let userAnswers = Array(questions.length).fill(null);
+        let elapsedTime = 0;
+        let timer;
+
+        const timerElement = document.getElementById('timer');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const imageElement = document.getElementById('image');
+        const prevButton = document.getElementById('prev');
+        const nextButton = document.getElementById('next');
+        const finishButton = document.getElementById('finish');
+        const resultElement = document.getElementById('result');
+        const viewIncorrectAnswersButton = document.getElementById('viewIncorrectAnswers');
+        const incorrectAnswersElement = document.getElementById('incorrectAnswers');
+
+        function startTimer() {
+            timer = setInterval(() => {
+                elapsedTime++;
+                const minutes = Math.floor(elapsedTime / 60);
+                const seconds = elapsedTime % 60;
+                timerElement.textContent = `Время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Перемешиваем вопросы и варианты ответов
+        function shuffleQuestionsAndOptions() {
+            shuffleArray(questions);
+            questions.forEach(question => shuffleArray(question.options));
+        }
+
+
+        // Ограничиваем вопросы до 20
+        function shuffleQuestionsAndLimit() {
+          shuffleArray(questions); // Перемешиваем все вопросы
+          questions = questions.slice(0, 20); // Берем первые 20 вопросов после перемешивания
+          questions.forEach(question => shuffleArray(question.options)); // Перемешиваем варианты ответов для каждого вопроса
+        }
+
+
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            questionElement.textContent = `Вопрос ${currentQuestion + 1}: ${question.question}`;
+
+            if (question.image) {
+                imageElement.innerHTML = `<img src="${question.image}" alt="Вопрос" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px;">`;
+            } else {
+                imageElement.innerHTML = "";
+            }
+
+            optionsElement.innerHTML = "";
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+
+                // Если вариант ответа — это изображение
+                if (option.includes('.jpg') || option.includes('.png') || option.includes('.jpeg')) {
+                    optionDiv.innerHTML = `<img src="${option}" alt="Option" style="max-width: 100px; height: auto; border-radius: 8px;">`;
+                } else {
+                    optionDiv.textContent = option;
+                }
+
+                optionDiv.onclick = () => selectOption(index);
+
+                if (userAnswers[currentQuestion] === index) {
+                    optionDiv.classList.add('selected');
+                }
+
+                optionsElement.appendChild(optionDiv);
+            });
+
+            prevButton.disabled = currentQuestion === 0;
+            nextButton.disabled = currentQuestion === questions.length - 1;
+        }
+
+        function selectOption(index) {
+            userAnswers[currentQuestion] = index;
+            loadQuestion();
+        }
+
+        function finishTest() {
+            clearInterval(timer);
+
+            const correctCount = questions.reduce((count, question, index) => {
+                return count + (question.options[userAnswers[index]] === question.correct ? 1 : 0);
+            }, 0);
+
+            const percentage = Math.round((correctCount / questions.length) * 100);
+            
+            // Создаем диаграмму
+            const canvas = document.createElement('canvas');
+            resultElement.innerHTML = `<p>Правильных ответов: ${correctCount} из ${questions.length} (${percentage}%)</p>`;
+            resultElement.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Правильные', 'Неправильные'],
+                    datasets: [{
+                        data: [correctCount, questions.length - correctCount],
+                        backgroundColor: ['#4caf50', '#f44336']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        datalabels: {
+                            display: true,
+                            formatter: (value) => {
+                                const percentage = Math.round((value / questions.length) * 100);
+                                return `${percentage}%`;
+                            },
+                            color: 'black'
+                        }
+                    }
+                }
+            });
+
+            viewIncorrectAnswersButton.style.display = 'block'; // Показываем кнопку для просмотра неправильных ответов
+        }
+
+        function viewIncorrectAnswers() {
+    if (!incorrectAnswersElement) {
+        console.error("Элемент 'incorrectAnswersElement' не найден.");
+        return;
+    }
+
+    incorrectAnswersElement.innerHTML = ''; // Очищаем предыдущий список
+
+    questions.forEach((question, index) => {
+        if (question.options[userAnswers[index]] !== question.correct) {
+            const incorrectDiv = document.createElement('div');
+            incorrectDiv.className = 'incorrect-answer';
+
+            // Проверяем наличие изображения для вопроса
+            let questionImageHTML = '';
+            if (question.image) {
+                questionImageHTML = `<img src="${question.image}" alt="Вопрос" style="max-width: 100%; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px;">`;
+            }
+
+            // Форматируем выбранный пользователем ответ
+            let userAnswerHTML = '';
+            const userAnswer = question.options[userAnswers[index]];
+            if (userAnswer && (userAnswer.includes('.jpg') || userAnswer.includes('.png') || userAnswer.includes('.jpeg'))) {
+                userAnswerHTML = `<img src="${userAnswer}" alt="Ваш ответ" style="max-width: 100px; height: auto; border-radius: 8px;">`;
+            } else {
+                userAnswerHTML = userAnswer || 'Ответ не выбран';
+            }
+
+            // Форматируем правильный ответ
+            let correctAnswerHTML = '';
+            if (question.correct && (question.correct.includes('.jpg') || question.correct.includes('.png') || question.correct.includes('.jpeg'))) {
+                correctAnswerHTML = `<img src="${question.correct}" alt="Правильный ответ" style="max-width: 100px; height: auto; border-radius: 8px;">`;
+            } else {
+                correctAnswerHTML = question.correct;
+            }
+
+            // Заполняем содержимое блока неправильного ответа
+            incorrectDiv.innerHTML = `
+                <p class="question-text">Вопрос ${index + 1}: ${question.question}</p>
+                ${questionImageHTML}
+                <p><strong class="your-answer">Ваш ответ:</strong> ${userAnswerHTML}</p>
+                <p><strong class="correct-answer">Правильный ответ:</strong> ${correctAnswerHTML}</p>
+            `;
+
+            incorrectAnswersElement.appendChild(incorrectDiv);
+        }
+    });
+
+      if (incorrectAnswersElement.innerHTML === '') {
+          incorrectAnswersElement.innerHTML = '<p>Все ответы правильные!</p>';
+      }
+  }
+
+
+        prevButton.onclick = () => {
+            currentQuestion--;
+            loadQuestion();
+        };
+
+        nextButton.onclick = () => {
+            currentQuestion++;
+            loadQuestion();
+        };
+
+        finishButton.onclick = finishTest;
+        viewIncorrectAnswersButton.onclick = viewIncorrectAnswers;
+
+        // Перемешиваем вопросы и ответы только один раз перед началом
+        shuffleQuestionsAndOptions();
+        startTimer();
+        loadQuestion();
+    </script>
+</body>
+</html>
